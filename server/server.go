@@ -119,6 +119,7 @@ func (c *Client) Register(login string, pass string, nick string) {
 	c.Auth(login, pass)
 }
 
+// Disconnect is function a wrapper of conn.Close
 func (c *Client) Disconnect() {
 	c.conn.Close()
 	server.LeaveChannel(c, "*")
@@ -324,6 +325,8 @@ func (c *Client) removeChannel(chid string) {
 }
 
 ///////////////// Server Class ////////////////////////////////////////////////
+
+// Server is global data storage
 type Server struct {
 	Logins       map[string]string
 	Nicks        map[string]string
@@ -333,6 +336,7 @@ type Server struct {
 	Channels     map[string]*Channel
 }
 
+// NewServer is constructor of Server
 func NewServer() *Server {
 	s := &Server{
 		Logins:       make(map[string]string),
@@ -349,6 +353,7 @@ func NewServer() *Server {
 	return s
 }
 
+// Auth checks auth of Client
 func (s *Server) Auth(c *Client, login string, pass string) (string, int, error) {
 
 	nick, ok := s.Logins[login]
@@ -365,6 +370,7 @@ func (s *Server) Auth(c *Client, login string, pass string) (string, int, error)
 	return utils.GetMD5Hash(login), ErrOK, nil
 }
 
+// Register adds new user
 func (s *Server) Register(c *Client, login string, pass string, nick string) (int, error) {
 	if login == "" || nick == "" || pass == "" {
 		return ErrEmptyField, errors.New("Empty field")
@@ -497,7 +503,7 @@ func (s *Server) EnterToChannel(c *Client, chid string) {
 func (s *Server) LeaveChannel(c *Client, chid string) {
 	if chid == "*" {
 		c.Ok("leave")
-		for id, _ := range c.channels {
+		for id := range c.channels {
 			if ch, ok := s.Channels[id]; ok {
 				ch.Leave(c)
 			}
@@ -551,6 +557,8 @@ func (s *Server) SendMessage(c *Client, chid string, body string) {
 }
 
 ///////////////// Channel Class ///////////////////////////////////////////////
+
+// Channel is class for chat channel, keeps user informaion
 type Channel struct {
 	clients  map[string]*Client
 	joins    chan net.Conn
@@ -560,6 +568,7 @@ type Channel struct {
 	id       string
 }
 
+// NewChannel is construction for Channel
 func NewChannel(name string, desc string) *Channel {
 	c := &Channel{
 		clients:  make(map[string]*Client),
@@ -573,12 +582,15 @@ func NewChannel(name string, desc string) *Channel {
 	return c
 }
 
+// Broadcast sends message to all users in channel
 func (c *Channel) Broadcast(data []byte) {
 	for _, client := range c.clients {
 		client.outgoing <- data
 	}
 }
 
+// Join adds the user to channel and send informaion about this to all users in
+// channel
 func (c *Channel) Join(client *Client) {
 	if _, ok := c.clients[client.cid]; !ok {
 		c.clients[client.cid] = client
@@ -600,6 +612,8 @@ func (c *Channel) Join(client *Client) {
 	}
 }
 
+// Leave removes the user to channel and send informaion about this to all
+// users in channel
 func (c *Channel) Leave(client *Client) {
 	delete(c.clients, client.cid)
 
@@ -620,6 +634,7 @@ func (c *Channel) Leave(client *Client) {
 	c.outgoing <- m
 }
 
+// Listen throws data from channel outgoing to Broadcast
 func (c *Channel) Listen() {
 	go func() {
 		for data := range c.outgoing {
