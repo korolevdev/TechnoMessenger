@@ -366,6 +366,7 @@ func (s *Server) Auth(c *Client, login string, pass string) (string, int, error)
 	}
 	s.Clients[login] = c
 	c.nick = nick
+	c.cid = login
 
 	return utils.GetMD5Hash(login), ErrOK, nil
 }
@@ -424,6 +425,10 @@ func (s *Server) GetChannelList(c *Client) {
 // CreateChannel trying to create new channel
 func (s *Server) CreateChannel(c *Client, name string, descr string) {
 	id := utils.GetMD5Hash(name)
+	if name == "" {
+		c.Error("createchannel", "Name of channel is emtpy", ErrEmptyField, false)
+		return
+	}
 	if _, ok := s.Channels[id]; ok {
 		c.Error("createchannel", "Channel already exist", ErrAlreadyExist, false)
 		return
@@ -435,7 +440,7 @@ func (s *Server) CreateChannel(c *Client, name string, descr string) {
 
 // GetUserInfo gets user info to another user
 func (s *Server) GetUserInfo(c *Client, uid string) {
-	nick, ok := s.Nicks[uid]
+	nick, ok := s.Logins[uid]
 	if !ok {
 		c.Error("userinfo", "User not found", ErrUserNotFound, false)
 		return
