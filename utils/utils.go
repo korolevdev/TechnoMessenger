@@ -52,6 +52,11 @@ type CltUserInfo struct {
 	CltBaseReq
 }
 
+type CltSetUserInfo struct {
+	UserStatus string `json:"user_status"`
+	CltBaseReq
+}
+
 type CltChannel struct {
 	Channel string `json:"channel"`
 	CltBaseReq
@@ -93,6 +98,11 @@ type SrvWelcomeMessage struct {
 type SrvStatusMessage struct {
 	Status int    `json:"status"`
 	Error  string `json:"error"`
+}
+
+type SrvAddChannelMessage struct {
+	ChannelID string `json:"chid"`
+	SrvStatusMessage
 }
 
 type SrvStatusAuthMessage struct {

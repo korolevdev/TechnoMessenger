@@ -56,6 +56,7 @@ type Client struct {
 	cid      string
 	sid      string
 	nick     string
+	status   string
 	outgoing chan []byte
 	reader   *bufio.Reader
 	writer   *bufio.Writer
@@ -84,6 +85,7 @@ func newClient(connection net.Conn) *Client {
 		conn:     connection,
 		uid:      "",
 		login:    "",
+		status:   "",
 		ip:       connection.RemoteAddr().String(),
 		outgoing: make(chan []byte),
 		reader:   reader,
@@ -257,6 +259,16 @@ func (c *Client) read() {
 			if !c.Auth(im.Login, im.Pass) {
 				return
 			}
+		case "setuserinfo":
+			var im utils.CltSetUserInfo
+			err := json.Unmarshal(m.RawData, &im)
+			if !c.CheckError(err, "Invalid RawData"+string(m.RawData)) {
+				c.Error(m.Action, "SetUserInfo: Invalid data", ErrInvalidData, true)
+				return
+			}
+			c.status = im.UserStatus
+			c.Ok(m.Action)
+
 		case "channellist":
 			var im utils.CltBaseReq
 			err := json.Unmarshal(m.RawData, &im)
@@ -426,28 +438,44 @@ func (s *Server) GetChannelList(c *Client) {
 func (s *Server) CreateChannel(c *Client, name string, descr string) {
 	id := utils.GetMD5Hash(name)
 	if name == "" {
-		c.Error("createchannel", "Name of channel is emtpy", ErrEmptyField, false)
+		c.Error("createchannel", "Name of channel is empty", ErrEmptyField, false)
 		return
 	}
 	if _, ok := s.Channels[id]; ok {
 		c.Error("createchannel", "Channel already exist", ErrAlreadyExist, false)
 		return
 	}
-	c.Ok("createchannel")
 	ch := NewChannel(name, descr)
 	s.Channels[ch.id] = ch
+
+	m := utils.SrvAddChannelMessage{ChannelID: ch.id}
+	m.Status = ErrOK
+	m.Error = "OK"
+
+	sm, err := json.Marshal(struct {
+		Action string                     `json:"action"`
+		Data   utils.SrvAddChannelMessage `json:"data"`
+	}{
+		Action: "createchannel",
+		Data:   m,
+	})
+	if !c.CheckError(err, "Can't marhsal message") {
+		c.Disconnect()
+		return
+	}
+	c.outgoing <- sm
 }
 
 // GetUserInfo gets user info to another user
 func (s *Server) GetUserInfo(c *Client, uid string) {
-	nick, ok := s.Logins[uid]
+	client, ok := s.Clients[uid]
 	if !ok {
 		c.Error("userinfo", "User not found", ErrUserNotFound, false)
 		return
 	}
 	m := utils.SrvUserInfo{
-		Nick:       nick,
-		UserStatus: "You shall not pass!",
+		Nick:       client.nick,
+		UserStatus: client.status,
 	}
 	m.Status = ErrOK
 	m.Error = "OK"
