@@ -106,8 +106,9 @@ type SrvAddChannelMessage struct {
 }
 
 type SrvStatusAuthMessage struct {
-	Sid string `json:"sid"`
-	Cid string `json:"cid"`
+	Sid  string `json:"sid"`
+	Cid  string `json:"cid"`
+	Nick string `json:"nick"`
 	SrvStatusMessage
 }
 

@@ -147,8 +147,9 @@ func (c *Client) Auth(login string, pass string) bool {
 	c.uid = login
 	c.sid = sid
 	m := utils.SrvStatusAuthMessage{
-		Sid: c.sid,
-		Cid: c.cid,
+		Sid:  c.sid,
+		Cid:  c.cid,
+		Nick: c.nick,
 	}
 	m.Status = ErrOK
 	m.Error = "OK"
