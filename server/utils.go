@@ -1,24 +1,25 @@
-package utils
+package server
 
 import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
-	"io"
-	"os"
+	"log"
 )
 
+// CheckError checks errors and print log
 func CheckError(err error, message string, fatal bool) bool {
 	if err != nil {
-		fmt.Fprintln(os.Stderr, message+": "+err.Error())
 		if fatal {
-			os.Exit(1)
+			log.Fatalln(message + ": " + err.Error())
+		} else {
+			log.Println(message + ": " + err.Error())
 		}
 	}
 	return err == nil
 }
 
+// GetMD5Hash calculates MD5
 func GetMD5Hash(text string) string {
 	hasher := md5.New()
 	hasher.Write([]byte(text))
@@ -52,8 +53,16 @@ type CltUserInfo struct {
 	CltBaseReq
 }
 
+type CltUidReq struct {
+	User string `json:"uid"`
+	CltBaseReq
+}
+
 type CltSetUserInfo struct {
 	UserStatus string `json:"user_status"`
+	Avatar     string `json:"picture,omitempty"`
+	Email      string `json:"email,omitempty"`
+	Phone      string `json:"phone,omitempty"`
 	CltBaseReq
 }
 
@@ -67,9 +76,27 @@ type CltCreateChannel struct {
 	Descr string `json:"descr"`
 }
 
+type AttachData struct {
+	Mime string `json:"mime"`
+	Data string `json:"data"`
+}
+
 type CltMessage struct {
-	Body string `json:"body"`
-	CltChannel
+	Body   string     `json:"body"`
+	Attach AttachData `json:"attach,omitempty"`
+	CltUidReq
+}
+
+type Contact struct {
+	Name  string `json:"name"`
+	Phone string `json:"phone"`
+	Email string `json:"email"`
+	MyID  string `json:"myid,omitempty"`
+}
+
+type CltImport struct {
+	Contacts []Contact `json:"contacts"`
+	CltBaseReq
 }
 
 //// Server messages
@@ -78,15 +105,6 @@ type SrvMessage struct {
 	Action  string          `json:"action"`
 	Time    int             `json:"time"`
 	RawData json.RawMessage `json:"data,omitempty"`
-}
-
-func Decode(r io.Reader) (x *SrvMessage, err error) {
-	x = new(SrvMessage)
-	if err = json.NewDecoder(r).Decode(x); err != nil {
-		return
-	}
-	fmt.Printf("Decode\n")
-	return
 }
 
 type SrvWelcomeMessage struct {
@@ -119,45 +137,27 @@ type ChannelData struct {
 	Online int    `json:"online"`
 }
 
-type SrvListOfChannel struct {
-	Channels []ChannelData `json:"channels"`
-	SrvStatusMessage
-}
-
 type SrvUserInfo struct {
 	Nick       string `json:"nick"`
 	UserStatus string `json:"user_status"`
+	Email      string `json:"email"`
+	Phone      string `json:"phone"`
+	Avatar     string `json:"picture"`
 	SrvStatusMessage
 }
 
-/*
-{
-	"action":"enter",
-	"data":{
-		"status":[0-9]+,
-		"error":"TEXT_OF_ERROR",
-		"users":[
-		{
-			"uid":"USER_ID",
-			"nick":"NICKNAME",
-		},...
-		],
-		"last_msg": [
-		{
-			"mid":"MESSAGE_ID",
-			"from":"USER_ID",
-			"nick":"USERS_NICKNAME",
-			"body":"TEXT_OF_MESSAGE",
-			"time":UNIXTIMESTAMP_OF_MESSAGE,
-		}, ...
-		]
-	}
-}
-*/
-
 type UserData struct {
-	Uid  string `json:"uid"`
-	Nick string `json:"nick"`
+	Uid    string `json:"uid"`
+	Nick   string `json:"nick"`
+	Email  string `json:"email"`
+	Phone  string `json:"phone"`
+	Avatar string `json:"picture"`
+	MyID   string `json:"myid,omitempty"`
+}
+
+type SrvListOfUsers struct {
+	Users []UserData `json:"list"`
+	SrvStatusMessage
 }
 
 type MessageData struct {
@@ -168,42 +168,25 @@ type MessageData struct {
 	Time int    `json:"time"`
 }
 
-type SrvEnterToChannel struct {
-	Users    []UserData    `json:"users"`
-	LastMsgs []MessageData `json:"last_msg"`
-	SrvStatusMessage
-}
-
-/*
-{
-	"action":"ev_enter",
-	"data":{
-		"chid":"CHANNEL_ID",
-		"uid":"USER_ID",
-		"nick":"NICKNAME"
-	}
-}
-*/
-type EvSrvEnterLeave struct {
-	Chid string `json:"chid"`
-	Uid  string `json:"uid"`
-	Nick string `json:"nick"`
-}
-
 /*
 {
 	"action":"ev_message",
 	"data":{
-		"chid":"CHANNEL_ID",
 		"from":"USER_ID",
 		"nick":"NICKNAME",
-		"body":"TEXT_OF_MESSAGE"
+		"body":"TEXT_OF_MESSAGE",
+		"time":"TIMESPAMT",
+		"attach": {
+			"mime":"MIME_TYPE_OF_ATTACH",
+			"data":"BASE64_OF_ATTACH"
+		}
 	}
 }
 */
 type EvSrvMessage struct {
-	Chid string `json:"chid"`
-	From string `json:"from"`
-	Nick string `json:"nick"`
-	Body string `json:"body"`
+	From   string     `json:"from"`
+	Nick   string     `json:"nick"`
+	Body   string     `json:"body"`
+	Time   int        `json:"time"`
+	Attach AttachData `json:"attach,omitempty"`
 }

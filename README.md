@@ -1,8 +1,7 @@
-
-#Протокол работы с сервером
-##Запросы от клиента на сервер
-Регистрация
-```
+# Протокол работы с сервером  
+## Запросы от клиента на сервер  
+1. Регистрация
+```json
 {
 	"action":"register",
 	"data":{
@@ -12,8 +11,8 @@
 	}
 }
 ```
-Авторизация
-```
+2. Авторизация
+```json
 {
 	"action":"auth",
 	"data":{
@@ -22,18 +21,8 @@
 	}
 }
 ```
-Запрос на список каналов
-```
-{
-	"action":"channellist",
-	"data":{
-		"cid":"MY_USER_ID",
-		"sid":"MY_SESSION_ID"
-	}
-}
-```
-Запросить информацию о пользователе
-```
+3. Запросить информацию о пользователе
+```json
 {
 	"action":"userinfo",
 	"data": {
@@ -43,64 +32,101 @@
 	}
 }
 ```
-Войти в канал чата
-```
+4. Запрос контакт листа
+```json
 {
-	"action":"enter",
+	"action":"contactlist", 
 	"data": {
-		"cid":"MY_USER_ID",
-		"sid":"MY_SESSION_ID",
-		"channel":"NEED_CHANNEL_ID"
-	}
+        "cid":"MY_USER_ID",
+        "sid":"MY_SESSION_ID"
+    }
 }
 ```
-Выйти из канала
-```
+5. Добавление в контакт лист
+```json
 {
-	"action":"leave",
-	"data": {
-		"cid":"MY_USER_ID",
-		"sid":"MY_SESSION_ID",
-		"channel":"NEED_CHANNEL_ID"|"*"
-	}
+    "action":"addcontact", 
+    "data": {
+        "uid":"USER_ID",
+        "cid":"MY_USER_ID",
+        "sid":"MY_SESSION_ID"
+    }
 }
 ```
-Отправить сообщение в канал
-```
+6. Удаление из контакт листа 
+```json
 {
-	"action":"message",
-	"data": {
-		"cid":"MY_USER_ID",
-		"sid":"MY_SESSION_ID",
-		"channel":"NEED_CHANNEL_ID",
-		"body":"MESSAGE"
-	}
+    "action":"delcontact", 
+    "data": {
+        "uid":"USER_ID",
+        "cid":"MY_USER_ID",
+        "sid":"MY_SESSION_ID"
+    }
 }
 ```
-Создать канал 
-```
+7. Отправка сообщения 
+```json
 {
-	"action":"createchannel",
-	"data": {
-		"cid":"MY_USER_ID",
-		"sid":"MY_SESSION_ID",
-		"name":"NAME_OF_CHANNEL",
-		"descr":"DESCRIPTION_OF_CHANNEL",
-	}
+    "action":"message",
+    "data": {
+        "cid":"MY_USER_ID",
+        "sid":"MY_SESSION_ID",
+        "uid":"USER_ID",
+        "body":"MESSAGE",
+        "attach": {
+            "mime":"MIME_TYPE_OF_ATTACH",
+            "data":"BASE64_OF_ATTACH"
+        }
+    }
 }
 ```
+8. Импорт контактов
+```json 
+{
+    "action":"import",
+    "data":{
+        "contacts":[
+            {
+                "myid":"MY_ID",
+                "name":"NAME",
+                "phone":"PNONE",
+                "email":"EMAIL"
+            },
+            {
+                "myid":"MY_ID",
+                "name":"NAME",
+                "phone":"PNONE",
+                "email":"EMAIL" 
+            }
+        ]
+    }
+}
+```
+9. Изменить свою информацию 
+```json
+{
+    "action":"setuserinfo",
+    "data": {
+        "user_status":"STATUS_STRING",
+        "cid":"MY_USER_ID",
+        "sid":"MY_SESSION_ID"
+        "email":"EMAIL",
+        "phone":"PHONE",
+        "picture":"BASE64_SMALL_PIC"
+    }
+ }
 
-##Ответы сервера на клиент
-Welcome сообщение приходит при конекте к серверу
-```
+## Ответы сервера на клиент
+1. Welcome сообщение приходит при конекте к серверу
+```json
 {
 	"action":"welcome",
 	"message": "WELCOME_TEXT",
 	"time":UNIXTIMESTAMP
 }
 ```
-Ответ на авторизацию
-```
+2. Ответ на авторизацию
+```json
 {
 	"action":"auth",
 	"data":{
@@ -111,8 +137,8 @@ Welcome сообщение приходит при конекте к серве�
 	}
 }
 ```
-Ответ на регистрацию
-```
+3. Ответ на регистрацию
+```json
 {
 	"action":"register",
 	"data":{
@@ -121,104 +147,153 @@ Welcome сообщение приходит при конекте к серве�
 	}
 }
 ```
-Ответ на запрос списка каналов чата
-```
-{
-	"action":"channellist",
-	"data":{
-		"status":[0-9]+,
-		"error":"TEXT_OF_ERROR",
-		"channels":[
-		{
-			"chid":"NEED_CHANNEL_ID",
-			"name":"NAME_OF_CHANNEL",
-			"descr":"DESCRIPTION_OF_CHANNEL",
-			"online":ONLINE_NUM,
-		}, ....
-		]
-	}
-}
-```
-Ответ на вход в канал (получаем пользователей и возможно несколько предыдущих сообщений)
-```
-{
-	"action":"enter",
-	"data":{
-		"status":[0-9]+,
-		"error":"TEXT_OF_ERROR",
-		"users":[
-		{
-			"uid":"USER_ID",
-			"nick":"NICKNAME",
-		},...
-		],
-		"last_msg": [
-		{
-			"mid":"MESSAGE_ID",
-			"from":"USER_ID",
-			"nick":"USERS_NICKNAME",
-			"body":"TEXT_OF_MESSAGE",
-			"time":UNIXTIMESTAMP_OF_MESSAGE
-		}, ...
-		]
-	}
-}
-```
-Ответ на запрос информации о пользователе
-```
+4. Ответ на запрос информации о пользователе
+```json
 {
 	"action":"userinfo",
 	"data":{
 		"status":[0-9]+,
 		"error":"TEXT_OF_ERROR",
 		"nick":"NICKNAME",
+        "email":"EMAIL",
+        "phone":"PHONE",
+        "picture":"BASE64_SMALL_PIC"
 		"user_status":"STATUS_STRING"
 	}
 }
 ```
-Ответ на выход из канала
-```
+5. Ответ на запрос контакт листа
+```json
 {
-	"action":"leave",
-	"data":{
-		"status":[0-9]+,
-		"error":"TEXT_OF_ERROR"
-	}
+    "action":"contactlist", 
+    "data":{
+        "status":"[0-9]+",
+        "error":"TEXT_OF_ERROR",
+        "list":[
+            {
+                "myid":"YOUR_ID",
+                "uid":"UID",
+                "nick":"NICK NAME",
+                "email":"EMAIL",
+                "phone":"PHONE",
+                "picture":"BASE64_SMALL_PIC"
+            },
+            {
+                "myid":"YOUR_ID",
+                "uid":"UID",
+                "nick":"NICK NAME",
+                "email":"EMAIL",
+                "phone":"PHONE",
+                "picture":"BASE64_SMALL_PIC"
+            },
+        ]
+    }
 }
 ```
-##События присылаемые с сервера на клиент
-Кто-то вошел в канал (в том числе и вы)
-```
+6. Добавление контакта 
+```json
 {
-	"action":"ev_enter",
-	"data":{
-		"chid":"CHANNEL_ID",
-		"uid":"USER_ID",
-		"nick":"NICKNAME"
-	}
+    "action":"addcontact", 
+    "data": {
+        "status":"[0-9]+",
+        "error":"TEXT_OF_ERROR",
+        "user":{
+                "uid":"UID",
+                "nick":"NICK NAME",
+                "email":"EMAIL",
+                "phone":"PHONE"
+        }
+    }
 }
 ```
-Кто-то покинул канал
-```
+7. Удаление контакта 
+```json
 {
-	"action":"ev_leave",
-	"data":{
-		"chid":"CHANNEL_ID",
-		"uid":"USER_ID",
-		"nick":"NICKNAME"
-	}
+    "action":"delcontact", 
+    "data": {
+        "status":"[0-9]+",
+        "error":"TEXT_OF_ERROR",
+        "uid":"UID"
+    }
 }
 ```
-Кто-то написал сообщение в канал (в том числе и вы)
-```
+8. Импорт контактов
+```json
 {
-	"action":"ev_message",
-	"data":{
-		"chid":"CHANNEL_ID",
-		"from":"USER_ID",
-		"nick":"NICKNAME",
-		"body":"TEXT_OF_MESSAGE"
-	}
+    "action":"import", 
+    "data":{
+        "status":"[0-9]+",
+        "error":"TEXT_OF_ERROR",
+        "list":[
+            {
+                "myid":"YOUR_ID",
+                "uid":"UID",
+                "nick":"NICK NAME",
+                "email":"EMAIL",
+                "phone":"PHONE"
+            },
+            {
+                "myid":"YOUR_ID",
+                "uid":"UID",
+                "nick":"NICK NAME",
+                "email":"EMAIL",
+                "phone":"PHONE"
+            },
+        ]
+    }
+}
+```
+9. Изменить свою информацию 
+```json
+{
+    "action":"setuserinfo",
+    "data":{
+        "status":[0-9]+,
+        "error":"TEXT_OF_ERROR"
+    }
+ } 
+```
+10. Отправка сообщения 
+```json
+{
+    "action":"message", 
+    "data":{
+        "status":"[0-9]+",
+        "error":"TEXT_OF_ERROR"
+    }
 }
 ```
 
+## События присылаемые с сервера на клиент
+1. Новое сообщение 
+```json
+{
+    "action":"ev_message",
+    "data":{
+        "from":"USER_ID",
+        "nick":"NICKNAME",
+        "body":"TEXT_OF_MESSAGE",
+        "time":"TIMESPAMT",
+        "attach": {
+            "mime":"MIME_TYPE_OF_ATTACH",
+            "data":"BASE64_OF_ATTACH"
+        }
+    }
+ }
+```
+
+## Коды ошибок 
+```golang
+// Error codes
+const (
+	ErrOK              = 0 // All OK
+	ErrAlreadyExist    = 1 // Login or Nickname or Channel already exist
+	ErrInvalidPass     = 2 // Invalid login or password
+	ErrInvalidData     = 3 // Invalid JSON
+	ErrEmptyField      = 4 // Empty Nick, Login, Password or Channel
+	ErrAlreadyRegister = 5 // User is already registered
+	ErrNeedAuth        = 6 // User has to auth
+	ErrNeedRegister    = 7 // User has to register
+	ErrUserNotFound    = 8 // User not found by uid
+)
+```
