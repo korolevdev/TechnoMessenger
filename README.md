@@ -290,7 +290,7 @@ go run main.go (localhost:7788)
 // Error codes
 const (
 	ErrOK              = 0 // All OK
-	ErrAlreadyExist    = 1 // Login or Nickname or Channel already exist
+	ErrAlreadyExist    = 1 // Login or Nickname already exist
 	ErrInvalidPass     = 2 // Invalid login or password
 	ErrInvalidData     = 3 // Invalid JSON
 	ErrEmptyField      = 4 // Empty Nick, Login, Password or Channel
